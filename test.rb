@@ -8,39 +8,11 @@ mybtc = 0.0
 # グローバル変数
 price_array = []
 price_array.push(get_price)
-count_max = 60
+count_max = 1
 term = 5
 count = 0
 ave = 0.0
 std = 0.0
-
-
-
-# while(1)
-#   puts "-----------------------------------------------------------------"
-#   puts get_price
-
-#   buy_price = 892000.0
-#   sell_price = 892500.0
-#   current_price = get_price
-#   if (current_price > sell_price) && (mybtc >= 0.001)
-#     puts "売ります"
-#     mymoney += mybtc * current_price
-#     mybtc = 0.0
-#   elsif (current_price < buy_price) && (mymoney / current_price >= 0.001)
-#     puts "買います"
-#     mybtc += mymoney / current_price
-#     mymoney -= mybtc * current_price
-#   else
-#     puts "ステイ"
-#   end
-
-#   puts "JPY:#{mymoney}"
-#   puts "BTC:#{mybtc}"
-#   puts "時価総額:#{(mybtc * current_price) + mymoney}"
-
-#   sleep(1)
-# end
 
 while(1)
   # 現在の価格を取得
@@ -51,14 +23,7 @@ while(1)
     puts "■統計データ更新■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■"
     ave = get_ave(price_array)
     std = get_std(price_array)
-    puts "現在の価格：#{current_price}"
-    puts "#{ count_max }秒の平均値：#{ ave }"
-    puts "-1σ:#{ ave - std }"
-    puts "+1σ:#{ ave + std }"
-    puts "-2σ:#{ ave - (std * 2) }"
-    puts "+2σ:#{ ave + (std * 2) }"
-    puts "-3σ:#{ ave - (std * 3) }"
-    puts "+3σ:#{ ave + (std * 3) }"
+    data_print(ave,std,current_price,count_max,term)
     price_array.shift()
   end
 
@@ -67,41 +32,20 @@ while(1)
   sell_price = ave
 
   
-  
+  # 売買アルゴリズム
   if (current_price > sell_price) && (mybtc >= 0.001)
     puts "■売り■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■"
-    puts "現在の価格：#{current_price}"
-    puts "#{ count_max }秒の平均値：#{ ave }"
-    puts "-1σ:#{ ave - std }"
-    puts "+1σ:#{ ave + std }"
-    puts "-2σ:#{ ave - (std * 2) }"
-    puts "+2σ:#{ ave + (std * 2) }"
-    puts "-3σ:#{ ave - (std * 3) }"
-    puts "+3σ:#{ ave + (std * 3) }"
+    data_print(ave,std,current_price,count_max,term)
     mymoney += mybtc * current_price
     mybtc = 0.0
   elsif (current_price < buy_price) && (mymoney / current_price >= 0.001)
     puts "■買い■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■"
-    puts "現在の価格：#{current_price}"
-    puts "#{ count_max }秒の平均値：#{ ave }"
-    puts "-1σ:#{ ave - std }"
-    puts "+1σ:#{ ave + std }"
-    puts "-2σ:#{ ave - (std * 2) }"
-    puts "+2σ:#{ ave + (std * 2) }"
-    puts "-3σ:#{ ave - (std * 3) }"
-    puts "+3σ:#{ ave + (std * 3) }"
-    mybtc += mymoney / current_price
+    data_print(ave,std,current_price,count_max,term)
+    mybtc += dec_floor(mymoney / current_price, 3)
     mymoney -= mybtc * current_price
   else
     puts "■stay■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■"
-    puts "現在の価格：#{current_price}"
-    puts "#{ count_max }秒の平均値：#{ ave }"
-    puts "-1σ:#{ ave - std }"
-    puts "+1σ:#{ ave + std }"
-    puts "-2σ:#{ ave - (std * 2) }"
-    puts "+2σ:#{ ave + (std * 2) }"
-    puts "-3σ:#{ ave - (std * 3) }"
-    puts "+3σ:#{ ave + (std * 3) }"
+    data_print(ave,std,current_price,count_max,term)
   end
   puts ""
   puts "JPY:#{mymoney}"

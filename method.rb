@@ -3,6 +3,8 @@ require 'uri'
 require 'json'
 require './key'
 require "openssl"
+require 'bigdecimal'
+require 'bigdecimal/util'
 
 
 
@@ -29,9 +31,9 @@ def order(price,size,side)
     "product_code": "BTC_JPY",
     "child_order_type": "LIMIT",
     "side": "' + side + '",
-    "price":' + " #{price}" + ',
-    "size":' + " #{size}" + ',
-    "minute_to_expire": 10000,
+    "price":' + price + ',
+    "size":' + size + ',
+    "minute_to_expire": 1,
     "time_in_force": "GTC"
   }'
   text = timestamp + method + uri.request_uri + body
@@ -70,6 +72,7 @@ def get_balance(coin_name)
   response_hash = JSON.parse(response.body)
   response_hash.find {|n| n["currency_code"] == coin_name}
 end
+
 
 def ifdoneOCO
   key = API_KEY
@@ -118,5 +121,60 @@ def ifdoneOCO
   https.use_ssl = true
   response = https.request(options)
   puts response.body
+end
+
+def data_print(ave,std,current_price,count_max,term)
+    puts "現在の価格：#{current_price}"
+    puts "#{ (count_max * term) / 60 }分の平均値：#{ ave }"
+    puts "+3σ:#{ ave + (std * 3) }"
+    puts "+2σ:#{ ave + (std * 2) }"
+    puts "+1σ:#{ ave + std }"
+    puts "-1σ:#{ ave - std }"
+    puts "-2σ:#{ ave - (std * 2) }"
+    puts "-3σ:#{ ave - (std * 3) }"
+end
+
+def dec_floor(num, n)
+  BigDecimal.new(num.to_s).floor(n).to_f
+end
+
+def getget
+  key = API_KEY
+  secret = API_SECRET
+  timestamp = Time.now.to_i.to_s
+  method = "GET"
+  uri = URI.parse("https://api.bitflyer.jp")
+  uri.path = "/v1/me/getchildorders"
+  body = '{
+    "child_order_state": "COMPLETED",
+    "side": "BUY"
+  }'
+
+  text = timestamp + method + uri.request_uri
+  sign = OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new("sha256"), secret, text)
+  options = Net::HTTP::Get.new(uri.request_uri, initheader = {
+  "ACCESS-KEY" => key,
+  "ACCESS-TIMESTAMP" => timestamp,
+  "ACCESS-SIGN" => sign,
+  });
+  https = Net::HTTP.new(uri.host, uri.port)
+  https.use_ssl = true
+  response = https.request(options)
+  response_hash = JSON.parse(response.body)
+  response_hash = response_hash.find_all {|n| n["side"] == "BUY"}
+  array = []
+  for num in 0...1 do
+    array.push(response_hash[num])
+  end
+  array
+end
+
+
+
+
+def get_target
+  money = getget.reduce(0.0){|sum,n| sum += n["price"] * n["size"]}
+  quantity = getget.reduce(0.0){|sum,n| sum += n["size"]}
+  money / quantity
 end
 
